@@ -1,0 +1,52 @@
+### Создание пользователя (Create User)
+POST localhost:8081/api/v1/users
+Content-Type: application/json
+
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+> {%
+    client.test("Create User", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.json().username === "john_doe", "Username is incorrect");
+        client.assert(response.json().email === "john@example.com", "Email is incorrect");
+    });
+%}
+
+### Получение информации о пользователе (Get User)
+GET localhost:8081/api/v1/users/1
+
+> {%
+    client.test("Get User", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.json().username === "john_doe", "Username is incorrect");
+        client.assert(response.json().email === "john@example.com", "Email is incorrect");
+    });
+%}
+
+### Обновление информации о пользователе (Update User)
+PUT localhost:8081/api/v1/users/1
+Content-Type: application/json
+
+{
+  "email": "john.ggg@example.com"
+}
+
+> {%
+    client.test("Update User", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.json().email === "john.doe@example.com", "Updated email is incorrect");
+    });
+%}
+
+### Удаление пользователя (Delete User)
+DELETE localhost:8081/api/v1/users/1
+
+> {%
+    client.test("Delete User", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
