@@ -2,7 +2,7 @@
 by Daniyal Tuzelbayev 21B030935
 
 ## Introduction
-Go To Gym is a fitness application designed to help users plan and track their workouts effectively. With Go To Gym, users can create personalized training programs, log their workouts, track their progress, set fitness goals, and generate reports to monitor their achievements.
+Go To Gym is a fitness application designed to help users plan and track their workouts effectively. With Go To Gym, users can create personalized training programs, log their workouts, track their progress to monitor their achievements.
 
 ## Users REST API
 Users REST API
