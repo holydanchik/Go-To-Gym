@@ -4,6 +4,14 @@ by Daniyal Tuzelbayev 21B030935
 ## Introduction
 Go To Gym is a fitness application designed to help users plan and track their workouts effectively. With Go To Gym, users can create personalized training programs, log their workouts, track their progress, set fitness goals, and generate reports to monitor their achievements.
 
+## Users REST API
+Users REST API
+
+POST /api/v1/users         - Create a new user
+GET /api/v1/users/{id}     - Get information about a specific user
+PUT /api/v1/users/{id}     - Update information about a specific user
+DELETE /api/v1/users/{id}  - Delete a specific user
+
 
 ## DB Structure
 // Use DBML to define your database structure
