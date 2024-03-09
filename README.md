@@ -1,7 +1,44 @@
 # Go To Gym
+by Daniyal Tuzelbayev 21B030935
 
 ## Introduction
 Go To Gym is a fitness application designed to help users plan and track their workouts effectively. With Go To Gym, users can create personalized training programs, log their workouts, track their progress, set fitness goals, and generate reports to monitor their achievements.
+
+
+## DB Structure
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table users {
+  id serial [primary key]
+  username varchar(50) [not null, unique]
+  email varchar(100) [not null, unique]
+  password_hash varchar(100) [not null]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table workouts {
+  id serial [primary key]
+  user_id int [not null]
+  name varchar(255) [not null]
+  duration int [not null]
+  date date [not null]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table exercises {
+  id serial [primary key]
+  workout_id int [not null]
+  name varchar(255) [not null]
+  sets int [not null]
+  reps int [not null]
+  weight decimal(10,2)
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Ref: workouts.user_id > users.id
+Ref: exercises.workout_id > workouts.id
+
 
 ## Features
 - User Authentication: Secure registration and authentication system to manage user accounts.
