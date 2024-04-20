@@ -92,3 +92,16 @@ func (uh *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (uh *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	// Получить все записи о пользователях из базы данных
+	users, err := uh.Model.GetAll()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Преобразовать полученные данные в формат JSON и отправить клиенту
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
+}

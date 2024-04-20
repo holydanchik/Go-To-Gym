@@ -32,7 +32,7 @@ PUT localhost:8081/api/v1/users/1
 Content-Type: application/json
 
 {
-  "email": "john.ggg@example.com"
+  "email": "airat@example.com"
 }
 
 > {%

@@ -59,6 +59,7 @@ func (app *application) run() {
 
 	// Create a new user
 	v1.HandleFunc("/users", userHandler.CreateUser).Methods("POST")
+	v1.HandleFunc("/users", userHandler.GetAllUsers).Methods("GET")
 	// Get a specific user
 	v1.HandleFunc("/users/{id:[0-9]+}", userHandler.GetUser).Methods("GET")
 	// Update a specific user

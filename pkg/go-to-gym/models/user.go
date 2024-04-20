@@ -54,3 +54,26 @@ func (um *UserModel) Delete(id int) error {
 	}
 	return nil
 }
+
+func (um *UserModel) GetAll() ([]*User, error) {
+	query := `SELECT id, username, email, created_at FROM users`
+	rows, err := um.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*User
+	for rows.Next() {
+		var user User
+		err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return users, nil
+}
