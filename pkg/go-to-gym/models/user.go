@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -55,14 +56,31 @@ func (um *UserModel) Delete(id int) error {
 	return nil
 }
 
-func (um *UserModel) GetAll() ([]*User, error) {
-	query := `SELECT id, username, email, created_at FROM users`
+func (um *UserModel) GetAll(page, limit int, filter, sortBy, sortOrder string) ([]*User, error) {
+	// Формируем SQL запрос с учетом параметров пагинации, фильтрации и сортировки
+	query := "SELECT id, username, email, created_at FROM users"
+
+	if filter != "" {
+		query += fmt.Sprintf(" WHERE username LIKE '%%%s%%' OR email LIKE '%%%s%%'", filter, filter)
+	}
+
+	if sortBy != "" {
+		query += fmt.Sprintf(" ORDER BY %s %s", sortBy, sortOrder)
+	}
+
+	if limit > 0 {
+		offset := (page - 1) * limit
+		query += fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
+	}
+
+	// Выполняем запрос к базе данных
 	rows, err := um.DB.Query(query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	// Обрабатываем результат запроса и возвращаем список пользователей
 	var users []*User
 	for rows.Next() {
 		var user User
@@ -72,8 +90,10 @@ func (um *UserModel) GetAll() ([]*User, error) {
 		}
 		users = append(users, &user)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	return users, nil
 }

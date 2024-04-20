@@ -94,8 +94,15 @@ func (uh *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uh *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	// Получаем параметры запроса для пагинации, фильтрации и сортировки
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	filter := r.URL.Query().Get("filter")
+	sortBy := r.URL.Query().Get("sortBy")
+	sortOrder := r.URL.Query().Get("sortOrder")
+
 	// Получить все записи о пользователях из базы данных
-	users, err := uh.Model.GetAll()
+	users, err := uh.Model.GetAll(page, limit, filter, sortBy, sortOrder)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
