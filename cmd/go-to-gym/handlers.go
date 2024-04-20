@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/holydanchik/GoToGym/pkg/go-to-gym/models"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"strconv"
 	"time"
@@ -13,24 +14,47 @@ type UserHandler struct {
 	Model *models.UserModel
 }
 
+// CreateUser обрабатывает запрос на создание нового пользователя.
 func (uh *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 
+	// Декодируем JSON из тела запроса в структуру User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// Применяем хеширование пароля перед сохранением
+	hashedPassword, err := hashPassword(user.Password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	user.PasswordHash = hashedPassword
+
+	// Устанавливаем текущее время как время создания пользователя
 	user.CreatedAt = time.Now()
 
+	// Вставляем пользователя в базу данных
 	err = uh.Model.Insert(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Возвращаем успешный ответ с данными пользователя в формате JSON
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
+}
+
+// hashPassword хеширует пароль с использованием bcrypt.
+func hashPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPassword), nil
 }
 
 func (uh *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
