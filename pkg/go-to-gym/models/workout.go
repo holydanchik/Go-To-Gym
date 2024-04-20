@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -54,4 +55,46 @@ func (wm *WorkoutModel) Delete(id int) error {
 		return err
 	}
 	return nil
+}
+
+func (wm *WorkoutModel) GetAll(page, limit int, userID, sortBy, sortOrder string) ([]*Workout, error) {
+	query := "SELECT id, user_id, name, duration, date, created_at FROM workouts"
+
+	// Добавляем условие WHERE для фильтрации по user_id
+	if userID != "" {
+		query += fmt.Sprintf(" WHERE user_id = %s", userID)
+	}
+
+	// Добавляем сортировку
+	if sortBy != "" {
+		query += fmt.Sprintf(" ORDER BY %s %s", sortBy, sortOrder)
+	}
+
+	// Добавляем пагинацию
+	if limit > 0 {
+		offset := (page - 1) * limit
+		query += fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
+	}
+
+	rows, err := wm.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var workouts []*Workout
+	for rows.Next() {
+		var workout Workout
+		err := rows.Scan(&workout.ID, &workout.UserID, &workout.Name, &workout.Duration, &workout.Date, &workout.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		workouts = append(workouts, &workout)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return workouts, nil
 }

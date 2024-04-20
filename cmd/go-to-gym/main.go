@@ -20,8 +20,9 @@ type config struct {
 }
 
 type application struct {
-	config    config
-	userModel *models.UserModel
+	config       config
+	userModel    *models.UserModel
+	workoutModel *models.WorkoutModel
 }
 
 func main() {
@@ -40,10 +41,12 @@ func main() {
 
 	// Initialize UserModel
 	userModel := &models.UserModel{DB: db}
+	workoutModel := &models.WorkoutModel{DB: db}
 
 	app := &application{
-		config:    cfg,
-		userModel: userModel,
+		config:       cfg,
+		userModel:    userModel,
+		workoutModel: workoutModel,
 	}
 
 	app.run()
@@ -56,9 +59,10 @@ func (app *application) run() {
 
 	// User Singleton
 	userHandler := &UserHandler{Model: app.userModel}
+	workoutHandler := &WorkoutHandler{Model: app.workoutModel}
 
 	// Create a new user
-	v1.HandleFunc("/users", userHandler.CreateUser).Methods("POST")
+	v1.HandleFunc("/users/register", userHandler.CreateUser).Methods("POST")
 	v1.HandleFunc("/users", userHandler.GetAllUsers).Methods("GET")
 	// Get a specific user
 	v1.HandleFunc("/users/{id:[0-9]+}", userHandler.GetUser).Methods("GET")
@@ -66,6 +70,8 @@ func (app *application) run() {
 	v1.HandleFunc("/users/{id:[0-9]+}", userHandler.UpdateUser).Methods("PUT")
 	// Delete a specific user
 	v1.HandleFunc("/users/{id:[0-9]+}", userHandler.DeleteUser).Methods("DELETE")
+	// New route for workouts
+	v1.HandleFunc("/workouts", workoutHandler.GetAllWorkouts).Methods("GET")
 
 	log.Printf("Starting server on %s\n", app.config.port)
 	err := http.ListenAndServe(app.config.port, r)
