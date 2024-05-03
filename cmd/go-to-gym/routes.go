@@ -16,9 +16,7 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/v1/workouts", app.requirePermission("workouts:read", app.listWorkoutsHandler))
 	router.HandlerFunc(http.MethodPost, "/v1/workouts", app.requirePermission("workouts:write", app.createWorkoutHandler))
 	router.HandlerFunc(http.MethodGet, "/v1/workouts/:id", app.requirePermission("workouts:read", app.showWorkoutHandler))
-	//router.HandlerFunc(http.MethodGet, "/v1/workouts/:id", app.showWorkoutHandler)
 	router.HandlerFunc(http.MethodPatch, "/v1/workouts/:id", app.requirePermission("workouts:write", app.updateWorkoutHandler))
-	//router.HandlerFunc(http.MethodPatch, "/v1/workouts/:id", app.updateWorkoutHandler)
 	router.HandlerFunc(http.MethodDelete, "/v1/workouts/:id", app.requirePermission("workouts:write", app.deleteWorkoutHandler))
 
 	router.HandlerFunc(http.MethodPost, "/v1/users", app.registerUserHandler)

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/holydanchik/GoToGym/pkg/go-to-gym/validator"
-	"strings"
+	"github.com/lib/pq"
 	"time"
 )
 
@@ -37,8 +37,7 @@ func (m WorkoutModel) Insert(workout *Workout) error {
 		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at, version`
 
-	exercisesStr := "{" + strings.Join(workout.Exercises, ",") + "}"
-	args := []interface{}{workout.Name, workout.Description, exercisesStr, workout.CaloriesBurned}
+	args := []interface{}{workout.Name, workout.Description, pq.Array(workout.Exercises), workout.CaloriesBurned}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -54,18 +53,22 @@ func (m WorkoutModel) Get(id int64) (*Workout, error) {
 		SELECT id, created_at, name, description, exercises, calories_burned, version
 		FROM workouts
 		WHERE id = $1`
+
 	var workout Workout
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+
 	err := m.DB.QueryRowContext(ctx, query, id).Scan(
 		&workout.ID,
 		&workout.CreatedAt,
 		&workout.Name,
 		&workout.Description,
-		&workout.Exercises,
+		pq.Array(&workout.Exercises),
 		&workout.CaloriesBurned,
 		&workout.Version,
 	)
+
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -83,11 +86,11 @@ func (m WorkoutModel) Update(workout *Workout) error {
 		SET name = $1, description = $2, exercises = $3, calories_burned = $4, version = version + 1
 		WHERE id = $5 AND version = $6
 		RETURNING version`
-	exercisesStr := "{" + strings.Join(workout.Exercises, ",") + "}"
+
 	args := []interface{}{
 		workout.Name,
 		workout.Description,
-		exercisesStr,
+		pq.Array(workout.Exercises),
 		workout.CaloriesBurned,
 		workout.ID,
 		workout.Version,
@@ -129,54 +132,54 @@ func (m WorkoutModel) Delete(id int64) error {
 	return nil
 }
 
-func (m WorkoutModel) GetAll(title string, filters Filters, exercises string) ([]*Workout, Metadata, error) {
+func (m WorkoutModel) GetAll(name string, exercises []string, filters Filters) ([]*Workout, Metadata, error) {
 	query := fmt.Sprintf(`
-        SELECT count(*) OVER(), id, created_at, name, description, exercises, calories_burned, version
-        FROM workouts
-        WHERE (to_tsvector('simple', name) @@ plainto_tsquery('simple', $1) OR $1 = '')
-        AND (exercises @> ARRAY[$2]::text[] OR $2 = '')
-        ORDER BY %s %s, id ASC
-        LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
+		SELECT count(*) OVER(), id, created_at, name, description, exercises, calories_burned, version
+		FROM workouts
+		WHERE (to_tsvector('simple', name) @@ plainto_tsquery('simple', $1) OR $1 = '')
+		AND (exercises @> $2 OR $2 = '{}')
+		ORDER BY %s %s, id ASC
+		LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	args := []interface{}{title, exercises, filters.limit(), filters.offset()}
+
+	args := []interface{}{name, pq.Array(exercises), filters.limit(), filters.offset()}
+
 	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, Metadata{}, err
 	}
+
 	defer rows.Close()
 
 	totalRecords := 0
 	workouts := []*Workout{}
+
 	for rows.Next() {
 		var workout Workout
-		var exercisesRaw []byte
+
 		err := rows.Scan(
 			&totalRecords,
 			&workout.ID,
 			&workout.CreatedAt,
 			&workout.Name,
 			&workout.Description,
-			&exercisesRaw,
+			pq.Array(&workout.Exercises),
 			&workout.CaloriesBurned,
 			&workout.Version,
 		)
 		if err != nil {
 			return nil, Metadata{}, err
 		}
-
-		// Преобразование exercises из []byte в []string
-		exercisesStr := string(exercisesRaw)
-		// Удаление фигурных скобок
-		exercisesStr = strings.Trim(exercisesStr, "{}")
-		// Разделение строки по запятым
-		workout.Exercises = strings.Split(exercisesStr, ",")
-
 		workouts = append(workouts, &workout)
 	}
+
 	if err = rows.Err(); err != nil {
 		return nil, Metadata{}, err
 	}
+
 	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
 	return workouts, metadata, nil
 }
+
