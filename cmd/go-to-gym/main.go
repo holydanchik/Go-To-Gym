@@ -1,86 +1,80 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
-	"log"
-	"net/http"
-
-	"github.com/gorilla/mux"
-	"github.com/holydanchik/GoToGym/pkg/go-to-gym/models"
+	"github.com/holydanchik/GoToGym/pkg/go-to-gym/jsonlog"
+	"github.com/holydanchik/GoToGym/pkg/go-to-gym/model"
 	_ "github.com/lib/pq"
+	"os"
+	"time"
 )
 
+const version = "1.0.0"
+
 type config struct {
-	port string
+	port int
 	env  string
 	db   struct {
 		dsn string
 	}
+	limiter struct {
+		rps     float64
+		burst   int
+		enabled bool
+	}
 }
 
 type application struct {
-	config       config
-	userModel    *models.UserModel
-	workoutModel *models.WorkoutModel
+	config config
+	logger *jsonlog.Logger
+	models model.Models
 }
 
 func main() {
 	var cfg config
-	flag.StringVar(&cfg.port, "port", ":8081", "API server port")
-	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
-	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://danchik@localhost/gym?sslmode=disable", "PostgreSQL DSN")
-	flag.Parse()
 
-	// Connect to DB
+	flag.IntVar(&cfg.port, "port", 4000, "API server port")
+	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
+
+	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://danchik@localhost/gym?sslmode=disable", "PostgreSQL DSN")
+
+	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
+	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
+	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
+
+	flag.Parse()
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
+
 	db, err := openDB(cfg)
 	if err != nil {
-		log.Fatal(err)
+		logger.PrintFatal(err, nil)
 	}
 	defer db.Close()
 
-	// Initialize UserModel
-	userModel := &models.UserModel{DB: db}
-	workoutModel := &models.WorkoutModel{DB: db}
+	logger.PrintInfo("database connection pool established", nil)
 
 	app := &application{
-		config:       cfg,
-		userModel:    userModel,
-		workoutModel: workoutModel,
+		config: cfg,
+		logger: logger,
+		models: model.NewModels(db),
 	}
 
-	app.run()
-}
-
-func (app *application) run() {
-	r := mux.NewRouter()
-
-	v1 := r.PathPrefix("/api/v1").Subrouter()
-
-	// User Singleton
-	userHandler := &UserHandler{Model: app.userModel}
-	workoutHandler := &WorkoutHandler{Model: app.workoutModel}
-
-	// Create a new user
-	v1.HandleFunc("/users/register", userHandler.CreateUser).Methods("POST")
-	v1.HandleFunc("/users", userHandler.GetAllUsers).Methods("GET")
-	// Get a specific user
-	v1.HandleFunc("/users/{id:[0-9]+}", userHandler.GetUser).Methods("GET")
-	// Update a specific user
-	v1.HandleFunc("/users/{id:[0-9]+}", userHandler.UpdateUser).Methods("PUT")
-	// Delete a specific user
-	v1.HandleFunc("/users/{id:[0-9]+}", userHandler.DeleteUser).Methods("DELETE")
-	// New route for workouts
-	v1.HandleFunc("/workouts", workoutHandler.GetAllWorkouts).Methods("GET")
-
-	log.Printf("Starting server on %s\n", app.config.port)
-	err := http.ListenAndServe(app.config.port, r)
-	log.Fatal(err)
+	err = app.serve()
+	if err != nil {
+		logger.PrintFatal(err, nil)
+	}
 }
 
 func openDB(cfg config) (*sql.DB, error) {
-	// Use sql.Open() to create an empty connection pool, using the DSN from the config struct.
 	db, err := sql.Open("postgres", cfg.db.dsn)
+	if err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err = db.PingContext(ctx)
 	if err != nil {
 		return nil, err
 	}
