@@ -27,19 +27,19 @@ CREATE TABLE IF NOT EXISTS users
 );
 
 
-## API Endpoints
-# Workouts
+# API Endpoints
+## Workouts
 GET /v1/workouts: Retrieve all workouts.
 POST /v1/workouts: Create a new workout.
 GET /v1/workouts/{id}: Retrieve a specific workout by ID.
 PATCH /v1/workouts/{id}: Update an existing workout.
 DELETE /v1/workouts/{id}: Delete a workout.
-# Users
+## Users
 POST /v1/users: Register a new user.
 PUT /v1/users/activated: Activate a user.
-#Authentication
+## Authentication
 POST /v1/tokens/authentication: Create an authentication token.
-#Authorization
+## Authorization
 Each API endpoint is guarded by specific permissions:
 
 workouts:read: Read permission for workouts.
