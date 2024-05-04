@@ -28,6 +28,15 @@ CREATE TABLE IF NOT EXISTS users
 );
 ```
 
+## Add write workouts permission to user example SQL
+``` sql
+INSERT INTO users_permissions
+VALUES (
+           (SELECT id FROM users WHERE email = 'email@example.com'),
+           (SELECT id FROM permissions WHERE code = 'workouts:write')
+       );
+
+```
 
 # API Endpoints
 ## Workouts
