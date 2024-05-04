@@ -5,6 +5,7 @@ by Daniyal Tuzelbayev 21B030935
 Go To Gym is a fitness application designed to help users plan and track their workouts effectively. With Go To Gym, users can create personalized training programs, log their workouts, track their progress to monitor their achievements.
 
 ## DB Structure
+``` sql
 CREATE TABLE IF NOT EXISTS workouts
 (
     id              SERIAL PRIMARY KEY,
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS users
     activated     BOOLEAN NOT NULL,
     version       INTEGER NOT NULL DEFAULT 1
 );
+```
 
 
 # API Endpoints
