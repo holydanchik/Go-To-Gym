@@ -31,22 +31,29 @@ CREATE TABLE IF NOT EXISTS users
 
 # API Endpoints
 ## Workouts
+```
 GET /v1/workouts: Retrieve all workouts.
 POST /v1/workouts: Create a new workout.
 GET /v1/workouts/{id}: Retrieve a specific workout by ID.
 PATCH /v1/workouts/{id}: Update an existing workout.
 DELETE /v1/workouts/{id}: Delete a workout.
+```
 ## Users
+```
 POST /v1/users: Register a new user.
 PUT /v1/users/activated: Activate a user.
+```
 ## Authentication
+```
 POST /v1/tokens/authentication: Create an authentication token.
+```
 ## Authorization
 Each API endpoint is guarded by specific permissions:
-
+```
 workouts:read: Read permission for workouts.
 workouts:write: Write permission for workouts.
 These permissions are enforced using the requirePermission middleware.
+```
 
 ## Contributing
 Contributions to Go To Gym are welcome! Feel free to open issues for bug fixes, feature requests, or any other improvements you'd like to see. Pull requests are also encouraged.
