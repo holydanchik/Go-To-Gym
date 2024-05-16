@@ -163,8 +163,10 @@ func (app *application) deleteWorkoutHandler(w http.ResponseWriter, r *http.Requ
 
 func (app *application) listWorkoutsHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Name      string
-		Exercises []string
+		Name         string
+		Exercises    []string
+		CaloriesFrom int
+		CaloriesTo   int
 		model.Filters
 	}
 
@@ -173,6 +175,8 @@ func (app *application) listWorkoutsHandler(w http.ResponseWriter, r *http.Reque
 
 	input.Name = app.readString(qs, "name", "")
 	input.Exercises = app.readCSV(qs, "exercises", []string{})
+	input.CaloriesFrom = app.readInt(qs, "caloriesFrom", 0, v)
+	input.CaloriesTo = app.readInt(qs, "caloriesTo", 0, v)
 
 	input.Filters.Page = app.readInt(qs, "page", 1, v)
 	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
@@ -185,7 +189,7 @@ func (app *application) listWorkoutsHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	workouts, metadata, err := app.models.Workouts.GetAll(input.Name, input.Exercises, input.Filters)
+	workouts, metadata, err := app.models.Workouts.GetAll(input.Name, input.Exercises, input.CaloriesFrom, input.CaloriesTo, input.Filters)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return

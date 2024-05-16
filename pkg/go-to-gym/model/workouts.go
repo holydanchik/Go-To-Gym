@@ -132,19 +132,21 @@ func (m WorkoutModel) Delete(id int64) error {
 	return nil
 }
 
-func (m WorkoutModel) GetAll(name string, exercises []string, filters Filters) ([]*Workout, Metadata, error) {
+func (m WorkoutModel) GetAll(name string, exercises []string, from, to int, filters Filters) ([]*Workout, Metadata, error) {
 	query := fmt.Sprintf(`
 		SELECT count(*) OVER(), id, created_at, name, description, exercises, calories_burned, version
 		FROM workouts
 		WHERE (to_tsvector('simple', name) @@ plainto_tsquery('simple', $1) OR $1 = '')
 		AND (exercises @> $2 OR $2 = '{}')
+		AND (calories_burned >= $3 OR $3 = 0)
+		AND (calories_burned <= $4 OR $4 = 0)
 		ORDER BY %s %s, id ASC
-		LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
+		LIMIT $5 OFFSET $6`, filters.sortColumn(), filters.sortDirection())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	args := []interface{}{name, pq.Array(exercises), filters.limit(), filters.offset()}
+	args := []interface{}{name, pq.Array(exercises), from, to, filters.limit(), filters.offset()}
 
 	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -154,7 +156,7 @@ func (m WorkoutModel) GetAll(name string, exercises []string, filters Filters) (
 	defer rows.Close()
 
 	totalRecords := 0
-	workouts := []*Workout{}
+	var workouts []*Workout
 
 	for rows.Next() {
 		var workout Workout
@@ -182,4 +184,3 @@ func (m WorkoutModel) GetAll(name string, exercises []string, filters Filters) (
 	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
 	return workouts, metadata, nil
 }
-
