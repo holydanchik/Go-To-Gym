@@ -21,6 +21,9 @@ type Exercise struct {
 
 func ValidateExercise(v *validator.Validator, e *Exercise) {
 	v.Check(e.Name != "", "name", "must be provided")
+	v.Check(len(e.Name) <= 100, "name", "must not be more than 100 characters long")
+	v.Check(e.Sets >= 0, "sets", "must be a non-negative value")
+	v.Check(e.Reps >= 0, "reps", "must be a non-negative value")
 }
 
 type ExerciseModel struct {
