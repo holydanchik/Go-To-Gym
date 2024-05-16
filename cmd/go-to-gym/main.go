@@ -6,6 +6,7 @@ import (
 	"flag"
 	"github.com/holydanchik/GoToGym/pkg/go-to-gym/jsonlog"
 	"github.com/holydanchik/GoToGym/pkg/go-to-gym/model"
+	"github.com/holydanchik/GoToGym/pkg/go-to-gym/model/filler"
 	_ "github.com/lib/pq"
 	"os"
 	"time"
@@ -61,10 +62,33 @@ func main() {
 		models: model.NewModels(db),
 	}
 
+	isEmpty, err := isTableEmpty(db, "workouts")
+	if err != nil {
+		logger.PrintFatal(err, nil)
+	}
+
+	if isEmpty {
+		err = filler.PopulateDatabase(app.models)
+		if err != nil {
+			logger.PrintFatal(err, nil)
+			return
+		}
+		logger.PrintInfo("database filled with dummy data", nil)
+	}
+
 	err = app.serve()
 	if err != nil {
 		logger.PrintFatal(err, nil)
 	}
+}
+
+func isTableEmpty(db *sql.DB, tableName string) (bool, error) {
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM " + tableName).Scan(&count)
+	if err != nil {
+		return true, err
+	}
+	return count == 0, nil
 }
 
 func openDB(cfg config) (*sql.DB, error) {

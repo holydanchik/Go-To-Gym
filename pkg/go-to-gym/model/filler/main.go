@@ -2,7 +2,7 @@ package filler
 
 import "github.com/holydanchik/GoToGym/pkg/go-to-gym/model"
 
-func populateDatabase(models model.Models) error {
+func PopulateDatabase(models model.Models) error {
 	for _, workout := range workouts {
 		err := models.Workouts.Insert(&workout)
 		if err != nil {
