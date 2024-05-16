@@ -1,6 +1,16 @@
 # Go To Gym
 by Daniyal Tuzelbayev 21B030935
 
+# How to run an app directly on Terminal
+Provide all needed correct values.
+```
+go run ./cmd/go-to-gym \
+-dsn="postgres://username@localhost/gym?sslmode=disable" \
+-migrations=file://pkg/go-to-gym/migrations \
+-env=development \
+-port=4000
+```
+
 ## Introduction
 Go To Gym is a fitness application designed to help users plan and track their workouts effectively. With Go To Gym, users can create personalized training programs, log their workouts, track their progress to monitor their achievements.
 
@@ -15,6 +25,16 @@ CREATE TABLE IF NOT EXISTS workouts
     exercises       TEXT[] NOT NULL,
     calories_burned INTEGER,
     version         INTEGER NOT NULL DEFAULT 1
+);
+CREATE TABLE IF NOT EXISTS exercises
+(
+    id         SERIAL PRIMARY KEY,
+    created_at timestamp(0) with time zone NOT NULL DEFAULT NOW(),
+    name       VARCHAR(255)                NOT NULL,
+    sets       INT                         NOT NULL,
+    reps       INT                         NOT NULL,
+    version    integer                     NOT NULL DEFAULT 1,
+    workout_id INT REFERENCES workouts (id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS users
 (
@@ -46,6 +66,15 @@ POST /v1/workouts: Create a new workout.
 GET /v1/workouts/{id}: Retrieve a specific workout by ID.
 PATCH /v1/workouts/{id}: Update an existing workout.
 DELETE /v1/workouts/{id}: Delete a workout.
+```
+## Exercises
+```
+GET /v1/exercises: Retrieve all exercises.
+POST /v1/exercises: Create a new exercise.
+GET /v1/exercises/{id}: Retrieve a specific exercise by ID.
+PATCH /v1/exercises/{id}: Update an existing exercise.
+DELETE /v1/exercise/{id}: Delete an exercise.
+GET /v1/workouts/{id}/exercises: Retrieve all exercises that attached to specific workout_id.
 ```
 ## Users
 ```
